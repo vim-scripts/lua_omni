@@ -1,12 +1,12 @@
-README for lua_omni.vim (Version 0.1) / Nov 17 2010
+README for lua_omni.vim (Version 0.11) / Nov 20 2010
 
 	* INSTALATION
 	* RELEASE NOTES 
 	* FILES
 
 lua_omni.vim implements omni completion function for Lua. It works by scanning
-the _G table for names. There are some abbreviations and Lua function list
-option added too.
+the _G table for names and parsing Vim buffers. There are some abbreviations
+and Lua function list option added too.
 
 =======================================================================================
   INSTALLATION
@@ -27,10 +27,12 @@ Beware! Vim 7.3 is needed with enabled Lua support.
 =======================================================================================
 
 ---------------------------------------------------------------------------------------
-  RELEASE NOTES FOR VERSION 0.1
+  RELEASE NOTES FOR VERSION 0.11
 ---------------------------------------------------------------------------------------
-	+ first preliminary version (_G based completion, insert mode abbrevs and
-	  function listing)
+	+ fixed error in abbreviations 
+	+ added abbreviation for string.len
+	+ expanded omnifunc functionality to scan local function variables (works
+	  for the most part)
 
 
 =======================================================================================

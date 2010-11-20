@@ -2,7 +2,8 @@
 						*lua_omni-intro*
 
 This is preliminary version of my omni completion plugin for Lua. It works by
-scanning _G. Nested tables are supported so you can type:
+scanning _G and parsing Vim buffers. Nested tables are supported so you can
+type:
 :lua foobar = {numbers = {one = 1, two = 2, three = 3}}
 
 Then inserting in lua file "foo" will be completed by CTRL-X CTRL-O. Adding

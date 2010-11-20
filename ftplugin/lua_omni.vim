@@ -1,8 +1,8 @@
 " Vim filetype plugin file
 "    Language:  lua
-"      Plugin:  Lua Omni Complete (version 0.1)
+"      Plugin:  Lua Omni Complete (version 0.11)
 "  Maintainer:	Radek Kowalski <rk@bixbite.pl>
-"  Last Change:	2010.11.17
+"  Last Change:	2010.11.20
 "  License:	This file is placed in the public domain.
 
 " check if Vim is in correct version and has Lua support
@@ -64,7 +64,7 @@ let s:iabbrevlist = [
 \ ["gmatch(", "string.gmatch("],
 \ ["find(", "string.find("],
 \ ["sub(", "string.sub("],
-\ ["gsub(", "table.gsub("],
+\ ["gsub(", "string.gsub("],
 \ ["loc", "local"],
 \ ["unp(", "unpack("],
 \ ["match(", "string.match("],
@@ -74,6 +74,7 @@ let s:iabbrevlist = [
 \ ["forei(", "table.foreachi("],
 \ ["func", "function"],
 \ ["rep(", "string.rep("],
+\ ["len(", "string.len("]
 \ ]
 
 function! SetLuaIabbrevs()

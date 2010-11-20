@@ -9,7 +9,7 @@
 --        NOTES:  ---
 --       AUTHOR:  R. Kowalski
 --      COMPANY:  ---
---      VERSION:  0.1
+--      VERSION:  0.11
 --      CREATED:  10.11.2010
 --     REVISION:  ---
 --------------------------------------------------------------------------------
@@ -108,25 +108,40 @@ end
 function complete_base_string(base)
   local t = {}
   if type(base) == "string" then
+	-- completion using _G environment
 	local comps = find_completions2(base)
 	for _, v in pairs(comps) do
 	  table.insert(t, v[1])
 	end
 	table.sort(t)
+	-- completion using local variable assignments
+	local s, e = in_func_body(vim.window().buffer, vim.window().line)
+	if s then	-- check if cursor is within function definition
+	  -- get and filter possible variable assignments
+	  local assigments = {}
+	  for i, v in ipairs(search_assignments1(vim.window().buffer, s, e)) do
+		if string.find(v, "^" .. base) then table.insert(assigments, v) end
+	  end
+	  table.sort(assigments)
+	  -- merge assigment list at the beginning of final table
+	  t = merge_list(assigments, t)
+	end
   end
   return t
 end
 
 --- To be called within CompleteLua Vim function.
 function completefunc_luacode()
+  -- getting arguments from Vim function
   local findstart = vim.eval("a:findstart")
   local base = vim.eval("a:base")
+  -- this function is called twice - first for finding range in line to complete
   if findstart == 1 then
 	vim.command("return " .. completion_findstart())
-  else
+  else		-- the second run - do proper complete
 	local comps = complete_base_string(base)
 	for i = 1, #comps do comps[i] = "'" .. comps[i] .. "'" end
-	dir(comps)
+	-- returning 
 	vim.command("return [" .. table.concat(comps, ", ") .. "]")
   end
 end
@@ -170,6 +185,88 @@ function print_function_list(buf)
   if not funcnumber then print "no functions found..." end
 end
 
+--- Checks if current line lies in function definition.
+-- Depends on usual code formating where "function" and "end" statements start
+-- at first column.
+-- @param buf Vim's buffer to be used as source (current one if absent)
+-- @param line line number to be checked for being within function' body
+-- @return funcstart, funcend pair or nil, nil if line is outside a function
+function in_func_body(buf, line)
+  if not line then
+	buf = vim.window().buffer
+	line = vim.window().line
+  end
+  buf = buf or vim.buffer()
+  -- search for function definition first
+  local funcstart
+  for lineidx = line, 1, -1 do
+	-- If iterating back end at first column is found, then it's outside
+	-- function.
+	if string.find(buf[lineidx], "^end") then break end
+	if string.find(buf[lineidx], "^function") then
+	  funcstart = lineidx
+	  break
+	end
+  end
+  -- search for the function's closing "end"
+  -- (depends on an usual formating, doesn't count code chunks)
+  local funcend
+  if funcstart then	-- search for function's end only when start was found...
+	for lineidx = line + 1, #buf do
+	  if string.find(buf[lineidx], "^end") then
+		funcend = lineidx 
+		break
+	  end
+	end
+  end
+  return funcstart, funcend
+end
+
+--- Search for variable assignments in a Vim buffer within given line range.
+-- Note: it's not perfect - will not find assignments in "for ... in"
+-- constructs. Inner closure visibility ranges are also ignored.
+-- @param buf Vim buffer to be used
+-- @param startline line number from search of assignments will begin
+-- @param endline line number to search of assignments will end
+-- @return table with list of found variable names
+function search_assignments1(buf, startline, endline)	-- TODO add support for function's arguments and "if var in" statements
+  -- for testing, delete when not needed anymore
+--  if not buf then
+--	buf = vim.window().buffer
+--	startline, endline = in_func_body()
+--  end
+  assert(type(buf) == "userdata", "buf must be a Vim buffer!")
+  assert(type(startline) == "number", "startline must be a number!")
+  assert(type(endline) == "number", "endline must be a number!")
+  assert(startline < endline, "startline must precede endline!")
+  -- assignment has a forms like:
+  -- varname = something
+  -- varname1[, varname2[, varname3]] = something1[, something2[, something3]]
+  -- lets assume that there is only one "=" per line
+  -- visibility of closures by dammed (for now...)
+  local assignments = {}
+  for lineidx = startline, endline - 1 do
+	-- filter out eventual comments
+	local line = string.gsub(buf[lineidx], "%s*%-%-.*$", "")
+	-- check if there is assignment in a line
+	local s, e = string.find(line, "[^=]=[^=]")
+	if s then
+	  local _s, _e, pre, post = string.find(line, "%s([%w,%s_,]+)=(.+)")
+	  -- focus on pre, variable names are most important
+	  if pre then
+		-- if subnum == 1 then assignment is local
+		local line, subnum = string.gsub(pre, "local%s+", "")
+		-- just store variable names in a set
+		for varname in string.gmatch(line, "[^, \t]+") do assignments[varname] = true end
+	  end
+	end
+  end
+  -- convert set to a list
+  local assignmentlist = {}
+  for k, v in pairs(assignments) do table.insert(assignmentlist, k) end
+  return assignmentlist
+end
+
 --- Miscellaneous. -------------------------------------------------------------
 
 --- Prints keys within a table (or environment). Similar to Python's dir.
@@ -210,6 +307,21 @@ function slice(t, s, e)
 	if t[idx] then table.insert(sliced, t[idx]) end
   end
   return sliced
+end
+
+--- Merges multiple tables as lists.
+-- @return resulting list have merged arguments from left to right in ascending order
+function merge_list(...)
+  local res = {}
+  for idx = 1, select("#", ...) do
+	local t = select(idx, ...)
+	if type(t) == "table" then
+	  for i, v in ipairs(t) do table.insert(res, v) end
+	else
+	  table.insert(res, t)
+	end
+  end
+  return res
 end
 
 --- Returns list of active windows in a current tab.
