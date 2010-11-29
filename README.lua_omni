@@ -1,4 +1,4 @@
-README for lua_omni.vim (Version 0.11) / Nov 20 2010
+README for lua_omni.vim (Version 0.12) / Nov 29 2010
 
 	* INSTALATION
 	* RELEASE NOTES 
@@ -27,12 +27,10 @@ Beware! Vim 7.3 is needed with enabled Lua support.
 =======================================================================================
 
 ---------------------------------------------------------------------------------------
-  RELEASE NOTES FOR VERSION 0.11
+  RELEASE NOTES FOR VERSION 0.12
 ---------------------------------------------------------------------------------------
-	+ fixed error in abbreviations 
-	+ added abbreviation for string.len
-	+ expanded omnifunc functionality to scan local function variables (works
-	  for the most part)
+	+ improved Lua search_assignments1 function to search variable names in
+	  "for in" and function statements
 
 
 =======================================================================================

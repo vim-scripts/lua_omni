@@ -9,7 +9,7 @@
 --        NOTES:  ---
 --       AUTHOR:  R. Kowalski
 --      COMPANY:  ---
---      VERSION:  0.11
+--      VERSION:  0.12
 --      CREATED:  10.11.2010
 --     REVISION:  ---
 --------------------------------------------------------------------------------
@@ -114,6 +114,7 @@ function complete_base_string(base)
 	  table.insert(t, v[1])
 	end
 	table.sort(t)
+
 	-- completion using local variable assignments
 	local s, e = in_func_body(vim.window().buffer, vim.window().line)
 	if s then	-- check if cursor is within function definition
@@ -223,43 +224,48 @@ function in_func_body(buf, line)
 end
 
 --- Search for variable assignments in a Vim buffer within given line range.
--- Note: it's not perfect - will not find assignments in "for ... in"
--- constructs. Inner closure visibility ranges are also ignored.
 -- @param buf Vim buffer to be used
 -- @param startline line number from search of assignments will begin
 -- @param endline line number to search of assignments will end
 -- @return table with list of found variable names
-function search_assignments1(buf, startline, endline)	-- TODO add support for function's arguments and "if var in" statements
-  -- for testing, delete when not needed anymore
---  if not buf then
---	buf = vim.window().buffer
---	startline, endline = in_func_body()
---  end
+function search_assignments1(buf, startline, endline)
   assert(type(buf) == "userdata", "buf must be a Vim buffer!")
   assert(type(startline) == "number", "startline must be a number!")
   assert(type(endline) == "number", "endline must be a number!")
   assert(startline < endline, "startline must precede endline!")
+
   -- assignment has a forms like:
   -- varname = something
   -- varname1[, varname2[, varname3]] = something1[, something2[, something3]]
   -- lets assume that there is only one "=" per line
   -- visibility of closures by dammed (for now...)
   local assignments = {}
+  -- Patterns have list of patterns matching variable definitions. The first
+  -- must be the usual "varname = something" type.
+  local patterns = {"([%w,%s_,]-[^=])=([^=].-)",	-- check if there is assignment in a line
+					"for%s+(.-)%s+in%s+(.-)",		-- check if there are variable definitions in "for ... in" loop
+					"function%s%s-[%w-_]-%s-%((.-)%)"}			-- check if there are variable set in function definition
+
   for lineidx = startline, endline - 1 do
 	-- filter out eventual comments
 	local line = string.gsub(buf[lineidx], "%s*%-%-.*$", "")
-	-- check if there is assignment in a line
-	local s, e = string.find(line, "[^=]=[^=]")
-	if s then
-	  local _s, _e, pre, post = string.find(line, "%s([%w,%s_,]+)=(.+)")
-	  -- focus on pre, variable names are most important
+	-- Search for assignments, variable definitions in "for in" and in
+	-- function statements.
+	for i, pat in ipairs(patterns) do
+	  local s, e, pre, post = string.find(" " .. line .. " ", "%s" .. pat .. "%s")
 	  if pre then
-		-- if subnum == 1 then assignment is local
-		local line, subnum = string.gsub(pre, "local%s+", "")
+		-- if subnum is 1 then assignment is local
+		local line, subnum
+		if i == 1 then		-- only assignments can have local/not local variety
+		  line, subnum = string.gsub(pre, "local%s+", "")
+		else
+		  line = pre
+		end
 		-- just store variable names in a set
 		for varname in string.gmatch(line, "[^, \t]+") do assignments[varname] = true end
 	  end
 	end
+
   end
   -- convert set to a list
   local assignmentlist = {}
