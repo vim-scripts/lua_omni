@@ -1,39 +1,25 @@
 This is a mirror of http://www.vim.org/scripts/script.php?script_id=3331
 
-This is preliminary version of my omni completion plugin for Lua. It works by
-scanning _G for names and parsing Vim buffers. There are some abbreviations
-and Lua function list option added too.
-Nested tables are supported so you can type:
+This is (still kind of preliminary version) of my omni completion plugin for
+Lua. It works by scanning _G and parsing Vim buffers. Nested tables are
+supported so you can type:
 :lua foobar = {numbers = {one = 1, two = 2, three = 3}}
 
+Then typing CTRL-X CTRL-O list of possible matches will open:
+  foobar.numbers.one
+  foobar.numbers.two
+  foobar.numbers.three
 
-Then inserting in lua file "foo" will be completed by CTRL-X CTRL-O. Adding
-"." and using CTRL-X CTRL-O will result in "numbers". Adding another "."
-and repeating completion will show list of "one, two, three" numbers'
-members.
+Actually you can use globbing "*" and "?" characters to speed up typing like:
+  f*tw CTRL-X CTRL-O
+will output immediately:
+  foobar.numbers.two
+
+That is the new way of doing omni from this version. I've found it to be quicker
+and more convenient than multiple hitting CTR-X CTRL-O.
+Local variables completion works as before.
+
 
 Some other functions are supported like listing defined Lua functions in
 current buffer.
 There are common Lua abbreviation defined in lua_omni.vim too.
-                                                                       
-Mappings:
-
-CTRL-X CTRL-O
-	Calling the omni completion function.
-
-<Leader>fl	or	<Plug>PrintFunctionList
-	Prints list of defined Lua functions in current buffer. They are listed in
-	ascending line numbers order. Luadoc titles (if defined) are showed too.
-                                                                       
-<Leader>lf	or	<Plug>WriteAndLuaFile
-	Just a shortcut to call:
-		:w
-:luafile %
-
-
-<Leader>sli or	<Plug>SetLuaIabbrevs
-	Sets few common and useful insert mode abbreviations.
-
-<Leader>cli or	<Plug>ClearLuaIabbrevs
-	Clear any insert mode abbreviations set by previous shortcut.
-

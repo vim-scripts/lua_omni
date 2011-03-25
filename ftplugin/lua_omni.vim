@@ -1,8 +1,8 @@
 " Vim filetype plugin file
 "    Language:  lua
-"      Plugin:  Lua Omni Complete (version 0.12)
+"      Plugin:  Lua Omni Complete (version 0.13)
 "  Maintainer:	Radek Kowalski <rk@bixbite.pl>
-"  Last Change:	2010.11.29
+"  Last Change:	2011.03.25
 "  License:	This file is placed in the public domain.
 
 " check if Vim is in correct version and has Lua support
@@ -48,10 +48,10 @@ endif
 
 "noremap <unique> <script> <Plug>PrintFunctionList	<SID>foobar
 "noremap <unique> <script> <Plug>WriteAndLuaFile		<SID>foobar
-noremap <unique> <script> <Plug>PrintFunctionList	:lua print_function_list()
-noremap <unique> <script> <Plug>WriteAndLuaFile		:w:luafile %
-noremap <unique> <script> <Plug>SetLuaIabbrevs		:call SetLuaIabbrevs()
-noremap <unique> <script> <Plug>ClearLuaIabbrevs	:call ClearLuaIabbrevs()
+noremap! <unique> <script> <Plug>PrintFunctionList	:lua print_function_list()
+noremap! <unique> <script> <Plug>WriteAndLuaFile		:w:luafile %
+noremap! <unique> <script> <Plug>SetLuaIabbrevs		:call SetLuaIabbrevs()
+noremap! <unique> <script> <Plug>ClearLuaIabbrevs	:call ClearLuaIabbrevs()
 
 
 " Common Lua abbreviations
@@ -73,8 +73,13 @@ let s:iabbrevlist = [
 \ ["fore(", "table.foreach("],
 \ ["forei(", "table.foreachi("],
 \ ["func", "function"],
+\ ["th", "then"],
+\ ["el", "else"],
+\ ["ei", "elseif"],
 \ ["rep(", "string.rep("],
-\ ["len(", "string.len("]
+\ ["len(", "string.len("],
+\ ["wrap(", "coroutine.wrap("],
+\ ["yield(", "coroutine.yield("]
 \ ]
 
 function! SetLuaIabbrevs()

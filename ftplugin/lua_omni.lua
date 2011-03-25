@@ -9,12 +9,38 @@
 --        NOTES:  ---
 --       AUTHOR:  R. Kowalski
 --      COMPANY:  ---
---      VERSION:  0.12
---      CREATED:  10.11.2010
+--      VERSION:  0.13
+--      CREATED:  25.03.2011
 --     REVISION:  ---
 --------------------------------------------------------------------------------
 --
 
+
+--- Escape Lua pattern magic characters "[().%+-*?[^$]" using escape "%".
+-- @param s a string to be escaped
+-- @return just an escaped string
+function escape_magic_chars(s)
+  assert(type(s) == "string", "s must be a string!")
+
+  return (string.gsub(s, '([().%+-*?[^$])', '%%%1'))
+end
+
+
+--- Replaces "*" and "." characters to more fitting Lua pattern ones.
+-- @param s a string
+-- @return pattern
+function glob_to_pattern(s)
+  assert(type(s) == "string", "s must be a string!")
+
+  local pat = string.gsub(s, '.', function(c)
+	if c == "*" then
+	  return '.-'
+	elseif c == '?' then
+	  return '.'
+	else return escape_magic_chars(c) end
+  end)
+  return pat
+end
 
 
 --- Iterator which walks over a Vim buffer.
@@ -31,7 +57,9 @@ function line_buf_iter(buf)
   end
 end
 
+
 -- The completion functionality ------------------------------------------------
+
 
 --- Search for a single part path in _G environment.
 -- Nested tables aren't supported.
@@ -49,6 +77,7 @@ function find_completions1(pat)
   return comps
 end
 
+
 --- Search for multi level paths starting from _G environment.
 -- @param pat path to be used in search
 -- @return Table with list of k, v pairs.
@@ -65,6 +94,7 @@ function find_completions2(pat)
   if string.sub(pat, -1) == "." then
 	table.insert(levels, ".*")
   end
+
   -- set prepath if there are multiple levels (used for generating absolute paths)
   local prepath = #levels > 1 and table.concat(slice(levels, 1, #levels - 1), ".") .. "." or ""
   -- find target table namespace
@@ -88,6 +118,49 @@ function find_completions2(pat)
   return results
 end
 
+
+--- Search for paths in _G environment table and returns ones matching given pattern.
+-- @param pat a pattern
+-- @return list of matching paths from _G
+function find_completions3(pat)
+  local flat = {}
+  local visited = {}
+  local count = 0
+
+  function flatten_recursively(t, lvl)
+	lvl = lvl or ""
+	-- just to be safe...
+	if count > 10000 then return end
+
+	for k, v in pairs(t) do
+	  -- for safe measure above
+	  count = count + 1
+	  table.insert(flat, #lvl > 0 and lvl .. "." .. k or r)
+	  -- Inner table but do it recursively only when this run hasn't found it
+	  -- already.
+	  if type(v) == "table" and not visited[v] then
+		-- check to avoid in recursive call
+		visited[v] = true
+		flatten_recursively(v, #lvl > 0 and lvl .. "." .. k or k)
+		-- Uncheck to allow to visit the same table but from different path.
+		visited[v] = nil							
+	  end
+	end
+  end
+
+  -- start from _G
+  flatten_recursively(_G)
+
+  local res = {}
+  -- match paths with pattern
+  for _, v in ipairs(flat) do
+	if string.match(v, pat) then table.insert(res, v) end
+  end
+
+  return res
+end
+
+
 --- Utility function to be used with Vim's completefunc.
 function completion_findstart()
   local w = vim.window()
@@ -95,24 +168,33 @@ function completion_findstart()
   local line = buf[w.line]
   for i = w.col - 1, 1, -1 do
 	local c = string.sub(line, i, i)
-	if string.find(c, "[^a-zA-Z0-9_-%.]") then
+	-- "*" and "?" may be used by glob pattern
+	if string.find(c, "[^a-zA-Z0-9_-%.*?]") then
 	  return i
 	end
   end
   return 0
 end
 
+
 --- Find matching completions.
 -- @param base a base to which complete
 -- @return list with possible (string) abbreviations
 function complete_base_string(base)
   local t = {}
+
   if type(base) == "string" then
 	-- completion using _G environment
-	local comps = find_completions2(base)
-	for _, v in pairs(comps) do
-	  table.insert(t, v[1])
-	end
+	-- obsolete the new version seems better
+--	local comps = find_completions2(base)
+--	for _, v in pairs(comps) do
+--	  table.insert(t, v[1])
+--	end
+--	table.sort(t)
+
+	local pat = glob_to_pattern(base)
+	if not string.match(pat, '%.%*$') then pat = pat .. '.*' end 
+	t = find_completions3("^" .. pat .. "$")
 	table.sort(t)
 
 	-- completion using local variable assignments
@@ -131,6 +213,7 @@ function complete_base_string(base)
   return t
 end
 
+
 --- To be called within CompleteLua Vim function.
 function completefunc_luacode()
   -- getting arguments from Vim function
@@ -146,6 +229,7 @@ function completefunc_luacode()
 	vim.command("return [" .. table.concat(comps, ", ") .. "]")
   end
 end
+
 
 -- The outline window. ---------------------------------------------------------
 
@@ -164,6 +248,7 @@ function function_list(buf)
   end
   return funcs
 end
+
 
 --- Prints list of function within Vim buffer.
 -- The output format is line_number: function func_name __spaces__ function's title (if exists)
@@ -185,6 +270,7 @@ function print_function_list(buf)
   end
   if not funcnumber then print "no functions found..." end
 end
+
 
 --- Checks if current line lies in function definition.
 -- Depends on usual code formating where "function" and "end" statements start
@@ -222,6 +308,7 @@ function in_func_body(buf, line)
   end
   return funcstart, funcend
 end
+
 
 --- Search for variable assignments in a Vim buffer within given line range.
 -- @param buf Vim buffer to be used
@@ -273,6 +360,7 @@ function search_assignments1(buf, startline, endline)
   return assignmentlist
 end
 
+
 --- Miscellaneous. -------------------------------------------------------------
 
 --- Prints keys within a table (or environment). Similar to Python's dir.
@@ -283,10 +371,17 @@ function dir(t)
   assert(type(t) == "table", "t should be a table!")
   elseif type(t) == "table" then
 	for k, v in pairs(t) do
+	  -- TODO commit to main directory
+	  -- if value is a string and it's too long then trim it
+	  if type(v) == "string" and string.len(v) > 150 then
+		v = string.sub(v, 1, 150) .. "..."
+	  end
+	  -- TODO end
 	  print(k .. ":", v)
 	end
   end
 end
+
 
 --- Prints keys of internal Vim's vim Lua module.
 function dir_vim()
@@ -297,6 +392,7 @@ function dir_vim()
 	end
   end
 end
+
 
 --- Slice function operating on tables.
 -- Minus indexes aren't supported (yet...).
@@ -315,6 +411,7 @@ function slice(t, s, e)
   return sliced
 end
 
+
 --- Merges multiple tables as lists.
 -- @return resulting list have merged arguments from left to right in ascending order
 function merge_list(...)
@@ -329,6 +426,7 @@ function merge_list(...)
   end
   return res
 end
+
 
 --- Returns list of active windows in a current tab.
 -- @return vim.window like tables with similar keys
@@ -346,6 +444,7 @@ function window_list()
   return winlist
 end
 
+
 --- Just prints current window list.
 function print_window_list()
   local wincount
@@ -356,6 +455,7 @@ function print_window_list()
   end
   if not wincount then print("no windows found (how it's possible?!)...") end
 end
+
 
 --- Try to parse function documentation using luadoc format.
 -- At first it wasn't easy to write, but after some thought I had it done
@@ -400,6 +500,7 @@ function func_doc(line, buf)
   end
   return doc
 end
+
 
 --- Translates iterator function into a table.
 -- @param iter iterator function
