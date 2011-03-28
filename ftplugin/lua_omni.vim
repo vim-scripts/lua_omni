@@ -1,8 +1,8 @@
 " Vim filetype plugin file
 "    Language:  lua
-"      Plugin:  Lua Omni Complete (version 0.13)
+"      Plugin:  Lua Omni Complete (version 0.14)
 "  Maintainer:	Radek Kowalski <rk@bixbite.pl>
-"  Last Change:	2011.03.25
+"  Last Change:	2011.03.28
 "  License:	This file is placed in the public domain.
 
 " check if Vim is in correct version and has Lua support
@@ -46,12 +46,10 @@ if !hasmapto('<Plug>ClearLuaIabbrevs')
   map <unique> <Leader>cli  <Plug>ClearLuaIabbrevs
 endif
 
-"noremap <unique> <script> <Plug>PrintFunctionList	<SID>foobar
-"noremap <unique> <script> <Plug>WriteAndLuaFile		<SID>foobar
-noremap! <unique> <script> <Plug>PrintFunctionList	:lua print_function_list()
-noremap! <unique> <script> <Plug>WriteAndLuaFile		:w:luafile %
-noremap! <unique> <script> <Plug>SetLuaIabbrevs		:call SetLuaIabbrevs()
-noremap! <unique> <script> <Plug>ClearLuaIabbrevs	:call ClearLuaIabbrevs()
+noremap <unique> <script> <Plug>PrintFunctionList	:lua print_function_list()
+noremap <unique> <script> <Plug>WriteAndLuaFile		:w:luafile %
+noremap <unique> <script> <Plug>SetLuaIabbrevs		:call SetLuaIabbrevs()
+noremap <unique> <script> <Plug>ClearLuaIabbrevs	:call ClearLuaIabbrevs()
 
 
 " Common Lua abbreviations

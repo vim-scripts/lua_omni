@@ -1,4 +1,4 @@
-README for lua_omni.vim (Version 0.13) / Mar 25 2011
+README for lua_omni.vim (Version 0.14) / Mar 28 2011
 
 	* INSTALATION
 	* RELEASE NOTES 
@@ -27,11 +27,11 @@ Beware! Vim 7.3 is needed with enabled Lua support.
 =======================================================================================
 
 ---------------------------------------------------------------------------------------
-  RELEASE NOTES FOR VERSION 0.13
+  RELEASE NOTES FOR VERSION 0.14
 ---------------------------------------------------------------------------------------
-    + Changed scanning of _G table to more elaborate way. Now a "globbing" "*"
-	  and "?" characters may be used when typing.
-    + Few additions to abbreviations.
+    + Fixed bug in new completing function so root level names in _G table are
+	  actually showed.
+    + Fixed previously introduced bugs in Vim mappings.
 
 
 =======================================================================================

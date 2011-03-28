@@ -9,8 +9,8 @@
 --        NOTES:  ---
 --       AUTHOR:  R. Kowalski
 --      COMPANY:  ---
---      VERSION:  0.13
---      CREATED:  25.03.2011
+--      VERSION:  0.14
+--      CREATED:  28.03.2011
 --     REVISION:  ---
 --------------------------------------------------------------------------------
 --
@@ -135,7 +135,7 @@ function find_completions3(pat)
 	for k, v in pairs(t) do
 	  -- for safe measure above
 	  count = count + 1
-	  table.insert(flat, #lvl > 0 and lvl .. "." .. k or r)
+	  table.insert(flat, #lvl > 0 and lvl .. "." .. k or k)
 	  -- Inner table but do it recursively only when this run hasn't found it
 	  -- already.
 	  if type(v) == "table" and not visited[v] then
