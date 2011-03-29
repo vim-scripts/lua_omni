@@ -9,8 +9,8 @@
 --        NOTES:  ---
 --       AUTHOR:  R. Kowalski
 --      COMPANY:  ---
---      VERSION:  0.14
---      CREATED:  28.03.2011
+--      VERSION:  0.141
+--      CREATED:  29.03.2011
 --     REVISION:  ---
 --------------------------------------------------------------------------------
 --
@@ -135,13 +135,17 @@ function find_completions3(pat)
 	for k, v in pairs(t) do
 	  -- for safe measure above
 	  count = count + 1
-	  table.insert(flat, #lvl > 0 and lvl .. "." .. k or k)
+	  if type(k) == "string" then
+		table.insert(flat, #lvl > 0 and lvl .. "." .. k or k)
+	  end
 	  -- Inner table but do it recursively only when this run hasn't found it
 	  -- already.
 	  if type(v) == "table" and not visited[v] then
 		-- check to avoid in recursive call
 		visited[v] = true
-		flatten_recursively(v, #lvl > 0 and lvl .. "." .. k or k)
+		if type(k) == "string" then
+		  flatten_recursively(v, #lvl > 0 and lvl .. "." .. k or k)
+		end
 		-- Uncheck to allow to visit the same table but from different path.
 		visited[v] = nil							
 	  end
@@ -150,6 +154,10 @@ function find_completions3(pat)
 
   -- start from _G
   flatten_recursively(_G)
+
+--  for i, v in ipairs(flat) do
+--	pfile(i .. ": " .. v)
+--  end
 
   local res = {}
   -- match paths with pattern
