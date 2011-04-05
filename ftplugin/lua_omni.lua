@@ -9,8 +9,8 @@
 --        NOTES:  ---
 --       AUTHOR:  R. Kowalski
 --      COMPANY:  ---
---      VERSION:  0.141
---      CREATED:  29.03.2011
+--      VERSION:  0.15
+--      CREATED:  05.04.2011
 --     REVISION:  ---
 --------------------------------------------------------------------------------
 --
@@ -200,10 +200,36 @@ function complete_base_string(base)
 --	end
 --	table.sort(t)
 
-	local pat = glob_to_pattern(base)
-	if not string.match(pat, '%.%*$') then pat = pat .. '.*' end 
+	local sortbylen = false
+	local pat = string.match(base, '^[%a_][%a%d_]*$')
+	if pat then				-- single word completion
+	  pat = ".*" .. escape_magic_chars(pat) .. ".*"
+	  sortbylen = true
+	else					-- full completion
+	  pat = glob_to_pattern(base)
+	  if not string.match(pat, '%.%*$') then pat = pat .. '.*' end 
+	end
+	-- try to find something matching...
 	t = find_completions3("^" .. pat .. "$")
-	table.sort(t)
+	-- in a case no results were found try to expand dots
+	if #t == 0 then
+	  pat = string.gsub(base, "%.", "[^.]*%%.") .. '.*'
+	  t = find_completions3("^" .. pat .. "$")
+	end
+
+	-- For single word matches it's more convenient to have results sorted by
+	-- their string length.
+	if sortbylen then
+	  table.sort(t, function(o1, o2)
+		o1 = o1 or ""
+		o2 = o2 or ""
+		local l1 = string.len(o1)
+		local l2 = string.len(o2)
+		return l1 < l2
+	  end)
+	else
+	  table.sort(t)
+	end
 
 	-- completion using local variable assignments
 	local s, e = in_func_body(vim.window().buffer, vim.window().line)

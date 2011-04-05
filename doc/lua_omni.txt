@@ -16,6 +16,18 @@ Actually you can use globbing "*" and "?" characters to speed up typing like:
 will output immediately:
   foobar.numbers.two
 
+Single word can be used as well:
+three CTRL-X CTRL-O
+will give:
+  foobar.numbers.three
+Or even just "thr" will work too.
+
+Another way use completion is without any asterisks like:
+p.l.m CTRL-X CTRL-O
+to get:
+  package.loaded.math
+
+
 That is the new way of doing omni from this version. I've found it to be quicker
 and more convenient than multiple hitting CTR-X CTRL-O.
 Local variables completion works as before.
