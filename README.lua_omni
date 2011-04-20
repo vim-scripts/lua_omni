@@ -1,4 +1,4 @@
-README for lua_omni.vim (Version 0.15) / Apr 5 2011
+README for lua_omni.vim (Version 0.151) / Apr 20 2011
 
 	* INSTALATION
 	* RELEASE NOTES 
@@ -27,11 +27,9 @@ Beware! Vim 7.3 is needed with enabled Lua support.
 =======================================================================================
 
 ---------------------------------------------------------------------------------------
-  RELEASE NOTES FOR VERSION 0.15
+  RELEASE NOTES FOR VERSION 0.151
 ---------------------------------------------------------------------------------------
-	+ More convenient completion where single words or asterisk less shortcuts
-	  will work too.
-
+    + fixed small (thought irritating) bug in completion_findstart function
 
 
 =======================================================================================

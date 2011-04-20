@@ -1,19 +1,26 @@
---
---------------------------------------------------------------------------------
---         FILE:  lua_omni.lua
---        USAGE:  ---
---  DESCRIPTION:  Lua functions for Vim's omni completions (plus other).
---      OPTIONS:  ---
--- REQUIREMENTS:  ---
---         BUGS:  ---
---        NOTES:  ---
---       AUTHOR:  R. Kowalski
---      COMPANY:  ---
---      VERSION:  0.15
---      CREATED:  05.04.2011
---     REVISION:  ---
---------------------------------------------------------------------------------
---
+------------------------------------------------------------------------------
+-- (c) 2011 Radosław Kowalski <rk@bixbite.pl>                               --
+-- lua_omni.lua - Lua functions for Vim's omni completions v0.151           --
+-- License: This file is placed in the public domain.                       --
+------------------------------------------------------------------------------
+
+
+local __p_counter = 0
+--- Writes given arguments to temporary file adding counting and "\n" when appropriate. Useful when debugging.
+-- @param ... anything that a io.write function could accept
+local function __p(...)
+  __p_counter = __p_counter + 1
+  local f = io.open("/tmp/lua_omni_out.txt", "a")
+  if f then
+    f:write(__p_counter .. ": ")
+    f:write(...)
+    local last = select(select("#", ...), ...)
+    if type(last) == "string" and not string.find(last, "\n$") then
+      f:write("\n")
+    end
+    f:close()
+  end
+end
 
 
 --- Escape Lua pattern magic characters "[().%+-*?[^$]" using escape "%".
@@ -33,11 +40,11 @@ function glob_to_pattern(s)
   assert(type(s) == "string", "s must be a string!")
 
   local pat = string.gsub(s, '.', function(c)
-	if c == "*" then
-	  return '.-'
-	elseif c == '?' then
-	  return '.'
-	else return escape_magic_chars(c) end
+    if c == "*" then
+      return '.-'
+    elseif c == '?' then
+      return '.'
+    else return escape_magic_chars(c) end
   end)
   return pat
 end
@@ -50,10 +57,10 @@ function line_buf_iter(buf)
   buf = buf or vim.buffer()
   local lineidx = 0
   return function()
-	lineidx = lineidx + 1
-	if lineidx <= #buf then
-	  return buf[lineidx]
-	end
+    lineidx = lineidx + 1
+    if lineidx <= #buf then
+      return buf[lineidx]
+    end
   end
 end
 
@@ -70,9 +77,9 @@ end
 function find_completions1(pat)
   local comps = {}
   for k, v in pairs(_G) do
-	if string.find(k, "^" .. pat) then
-	  table.insert(comps, {k, v})
-	end
+    if string.find(k, "^" .. pat) then
+      table.insert(comps, {k, v})
+    end
   end
   return comps
 end
@@ -88,11 +95,11 @@ function find_completions2(pat)
   -- split path pattern into levels
   local levels = {}
   for lev in string.gmatch(pat, "[^%.]+") do
-	table.insert(levels, lev)
+    table.insert(levels, lev)
   end
   -- if the last character in pat is '.' and matching all level
   if string.sub(pat, -1) == "." then
-	table.insert(levels, ".*")
+    table.insert(levels, ".*")
   end
 
   -- set prepath if there are multiple levels (used for generating absolute paths)
@@ -100,20 +107,20 @@ function find_completions2(pat)
   -- find target table namespace
   local where = _G
   for i, lev in ipairs(levels) do
-	if i < #levels then		-- not last final path's part?
-	  local w = where[lev]
-	  if w and type(w) == "table" then	-- going into inner table/namespace?
-		where = w
-	  else	-- not, path is incorrect!
-		break
-	  end
-	else	-- the last part of path
-	  for k, v in pairs(where) do
-		if string.find(k, "^" .. lev) then	-- final names search...
-		  table.insert(results, {prepath .. k, v})
-		end
-	  end
-	end
+    if i < #levels then     -- not last final path's part?
+      local w = where[lev]
+      if w and type(w) == "table" then  -- going into inner table/namespace?
+        where = w
+      else  -- not, path is incorrect!
+        break
+      end
+    else    -- the last part of path
+      for k, v in pairs(where) do
+        if string.find(k, "^" .. lev) then  -- final names search...
+          table.insert(results, {prepath .. k, v})
+        end
+      end
+    end
   end
   return results
 end
@@ -128,41 +135,41 @@ function find_completions3(pat)
   local count = 0
 
   function flatten_recursively(t, lvl)
-	lvl = lvl or ""
-	-- just to be safe...
-	if count > 10000 then return end
+    lvl = lvl or ""
+    -- just to be safe...
+    if count > 10000 then return end
 
-	for k, v in pairs(t) do
-	  -- for safe measure above
-	  count = count + 1
-	  if type(k) == "string" then
-		table.insert(flat, #lvl > 0 and lvl .. "." .. k or k)
-	  end
-	  -- Inner table but do it recursively only when this run hasn't found it
-	  -- already.
-	  if type(v) == "table" and not visited[v] then
-		-- check to avoid in recursive call
-		visited[v] = true
-		if type(k) == "string" then
-		  flatten_recursively(v, #lvl > 0 and lvl .. "." .. k or k)
-		end
-		-- Uncheck to allow to visit the same table but from different path.
-		visited[v] = nil							
-	  end
-	end
+    for k, v in pairs(t) do
+      -- for safe measure above
+      count = count + 1
+      if type(k) == "string" then
+        table.insert(flat, #lvl > 0 and lvl .. "." .. k or k)
+      end
+      -- Inner table but do it recursively only when this run hasn't found it
+      -- already.
+      if type(v) == "table" and not visited[v] then
+        -- check to avoid in recursive call
+        visited[v] = true
+        if type(k) == "string" then
+          flatten_recursively(v, #lvl > 0 and lvl .. "." .. k or k)
+        end
+        -- Uncheck to allow to visit the same table but from different path.
+        visited[v] = nil                            
+      end
+    end
   end
 
   -- start from _G
   flatten_recursively(_G)
 
 --  for i, v in ipairs(flat) do
---	pfile(i .. ": " .. v)
+--  pfile(i .. ": " .. v)
 --  end
 
   local res = {}
   -- match paths with pattern
   for _, v in ipairs(flat) do
-	if string.match(v, pat) then table.insert(res, v) end
+    if string.match(v, pat) then table.insert(res, v) end
   end
 
   return res
@@ -175,11 +182,11 @@ function completion_findstart()
   local buf = w.buffer
   local line = buf[w.line]
   for i = w.col - 1, 1, -1 do
-	local c = string.sub(line, i, i)
-	-- "*" and "?" may be used by glob pattern
-	if string.find(c, "[^a-zA-Z0-9_-%.*?]") then
-	  return i
-	end
+    local c = string.sub(line, i, i)
+    -- "*" and "?" may be used by glob pattern
+    if string.find(c, "[^a-zA-Z0-9_%.*?]") then
+      return i
+    end
   end
   return 0
 end
@@ -192,57 +199,57 @@ function complete_base_string(base)
   local t = {}
 
   if type(base) == "string" then
-	-- completion using _G environment
-	-- obsolete the new version seems better
---	local comps = find_completions2(base)
---	for _, v in pairs(comps) do
---	  table.insert(t, v[1])
---	end
---	table.sort(t)
+    -- completion using _G environment
+    -- obsolete the new version seems better
+--  local comps = find_completions2(base)
+--  for _, v in pairs(comps) do
+--    table.insert(t, v[1])
+--  end
+--  table.sort(t)
 
-	local sortbylen = false
-	local pat = string.match(base, '^[%a_][%a%d_]*$')
-	if pat then				-- single word completion
-	  pat = ".*" .. escape_magic_chars(pat) .. ".*"
-	  sortbylen = true
-	else					-- full completion
-	  pat = glob_to_pattern(base)
-	  if not string.match(pat, '%.%*$') then pat = pat .. '.*' end 
-	end
-	-- try to find something matching...
-	t = find_completions3("^" .. pat .. "$")
-	-- in a case no results were found try to expand dots
-	if #t == 0 then
-	  pat = string.gsub(base, "%.", "[^.]*%%.") .. '.*'
-	  t = find_completions3("^" .. pat .. "$")
-	end
+    local sortbylen = false
+    local pat = string.match(base, '^[%a_][%a%d_]*$')
+    if pat then             -- single word completion
+      pat = ".*" .. escape_magic_chars(pat) .. ".*"
+      sortbylen = true
+    else                    -- full completion
+      pat = glob_to_pattern(base)
+      if not string.match(pat, '%.%*$') then pat = pat .. '.*' end 
+    end
+    -- try to find something matching...
+    t = find_completions3("^" .. pat .. "$")
+    -- in a case no results were found try to expand dots
+    if #t == 0 then
+      pat = string.gsub(base, "%.", "[^.]*%%.") .. '.*'
+      t = find_completions3("^" .. pat .. "$")
+    end
 
-	-- For single word matches it's more convenient to have results sorted by
-	-- their string length.
-	if sortbylen then
-	  table.sort(t, function(o1, o2)
-		o1 = o1 or ""
-		o2 = o2 or ""
-		local l1 = string.len(o1)
-		local l2 = string.len(o2)
-		return l1 < l2
-	  end)
-	else
-	  table.sort(t)
-	end
+    -- For single word matches it's more convenient to have results sorted by
+    -- their string length.
+    if sortbylen then
+      table.sort(t, function(o1, o2)
+        o1 = o1 or ""
+        o2 = o2 or ""
+        local l1 = string.len(o1)
+        local l2 = string.len(o2)
+        return l1 < l2
+      end)
+    else
+      table.sort(t)
+    end
 
-	-- completion using local variable assignments
-	local s, e = in_func_body(vim.window().buffer, vim.window().line)
-	if s then	-- check if cursor is within function definition
-	  -- get and filter possible variable assignments
-	  local assigments = {}
-	  for i, v in ipairs(search_assignments1(vim.window().buffer, s, e)) do
-		if string.find(v, "^" .. base) then table.insert(assigments, v) end
-	  end
-	  table.sort(assigments)
-	  -- merge assigment list at the beginning of final table
-	  t = merge_list(assigments, t)
-	end
+    -- completion using local variable assignments
+    local s, e = in_func_body(vim.window().buffer, vim.window().line)
+    if s then   -- check if cursor is within function definition
+      -- get and filter possible variable assignments
+      local assigments = {}
+      for i, v in ipairs(search_assignments1(vim.window().buffer, s, e)) do
+        if string.find(v, "^" .. base) then table.insert(assigments, v) end
+      end
+      table.sort(assigments)
+      -- merge assigment list at the beginning of final table
+      t = merge_list(assigments, t)
+    end
   end
   return t
 end
@@ -255,12 +262,12 @@ function completefunc_luacode()
   local base = vim.eval("a:base")
   -- this function is called twice - first for finding range in line to complete
   if findstart == 1 then
-	vim.command("return " .. completion_findstart())
-  else		-- the second run - do proper complete
-	local comps = complete_base_string(base)
-	for i = 1, #comps do comps[i] = "'" .. comps[i] .. "'" end
-	-- returning 
-	vim.command("return [" .. table.concat(comps, ", ") .. "]")
+    vim.command("return " .. completion_findstart())
+  else      -- the second run - do proper complete
+    local comps = complete_base_string(base)
+    for i = 1, #comps do comps[i] = "'" .. comps[i] .. "'" end
+    -- returning 
+    vim.command("return [" .. table.concat(comps, ", ") .. "]")
   end
 end
 
@@ -275,10 +282,10 @@ function function_list(buf)
   local funcs = {}
   local linenum = 0
   for line in line_buf_iter(buf) do
-	linenum = linenum + 1
-	if string.find(line, "^%s-function%s+") then
-	  funcs[#funcs + 1] = {linenum, line}
-	end
+    linenum = linenum + 1
+    if string.find(line, "^%s-function%s+") then
+      funcs[#funcs + 1] = {linenum, line}
+    end
   end
   return funcs
 end
@@ -292,15 +299,15 @@ function print_function_list(buf)
   local funclist = function_list(buf)
   local countsize = #tostring(funclist[#funclist][1])
   for i, f in ipairs(funclist) do
-	if i == 1 then print("line: function definition...") end
-	-- try to get any doc about function...
-	local doc = func_doc(f[1])
-	local title = string.gmatch(doc["---"] or "", "[^\n]+")
-	title = title and title() or nil
-	local s = string.format("%" .. countsize .. "d: %-" .. (40 - countsize) ..  "s %s", f[1], f[2],
-			(title or ""))
-	print(s)
-	funcnumber = i
+    if i == 1 then print("line: function definition...") end
+    -- try to get any doc about function...
+    local doc = func_doc(f[1])
+    local title = string.gmatch(doc["---"] or "", "[^\n]+")
+    title = title and title() or nil
+    local s = string.format("%" .. countsize .. "d: %-" .. (40 - countsize) ..  "s %s", f[1], f[2],
+            (title or ""))
+    print(s)
+    funcnumber = i
   end
   if not funcnumber then print "no functions found..." end
 end
@@ -314,31 +321,31 @@ end
 -- @return funcstart, funcend pair or nil, nil if line is outside a function
 function in_func_body(buf, line)
   if not line then
-	buf = vim.window().buffer
-	line = vim.window().line
+    buf = vim.window().buffer
+    line = vim.window().line
   end
   buf = buf or vim.buffer()
   -- search for function definition first
   local funcstart
   for lineidx = line, 1, -1 do
-	-- If iterating back end at first column is found, then it's outside
-	-- function.
-	if string.find(buf[lineidx], "^end") then break end
-	if string.find(buf[lineidx], "^function") then
-	  funcstart = lineidx
-	  break
-	end
+    -- If iterating back end at first column is found, then it's outside
+    -- function.
+    if string.find(buf[lineidx], "^end") then break end
+    if string.find(buf[lineidx], "^function") then
+      funcstart = lineidx
+      break
+    end
   end
   -- search for the function's closing "end"
   -- (depends on an usual formating, doesn't count code chunks)
   local funcend
-  if funcstart then	-- search for function's end only when start was found...
-	for lineidx = line + 1, #buf do
-	  if string.find(buf[lineidx], "^end") then
-		funcend = lineidx 
-		break
-	  end
-	end
+  if funcstart then -- search for function's end only when start was found...
+    for lineidx = line + 1, #buf do
+      if string.find(buf[lineidx], "^end") then
+        funcend = lineidx 
+        break
+      end
+    end
   end
   return funcstart, funcend
 end
@@ -363,29 +370,29 @@ function search_assignments1(buf, startline, endline)
   local assignments = {}
   -- Patterns have list of patterns matching variable definitions. The first
   -- must be the usual "varname = something" type.
-  local patterns = {"([%w,%s_,]-[^=])=([^=].-)",	-- check if there is assignment in a line
-					"for%s+(.-)%s+in%s+(.-)",		-- check if there are variable definitions in "for ... in" loop
-					"function%s%s-[%w-_]-%s-%((.-)%)"}			-- check if there are variable set in function definition
+  local patterns = {"([%w,%s_,]-[^=])=([^=].-)",    -- check if there is assignment in a line
+                    "for%s+(.-)%s+in%s+(.-)",       -- check if there are variable definitions in "for ... in" loop
+                    "function%s%s-[%w-_]-%s-%((.-)%)"}          -- check if there are variable set in function definition
 
   for lineidx = startline, endline - 1 do
-	-- filter out eventual comments
-	local line = string.gsub(buf[lineidx], "%s*%-%-.*$", "")
-	-- Search for assignments, variable definitions in "for in" and in
-	-- function statements.
-	for i, pat in ipairs(patterns) do
-	  local s, e, pre, post = string.find(" " .. line .. " ", "%s" .. pat .. "%s")
-	  if pre then
-		-- if subnum is 1 then assignment is local
-		local line, subnum
-		if i == 1 then		-- only assignments can have local/not local variety
-		  line, subnum = string.gsub(pre, "local%s+", "")
-		else
-		  line = pre
-		end
-		-- just store variable names in a set
-		for varname in string.gmatch(line, "[^, \t]+") do assignments[varname] = true end
-	  end
-	end
+    -- filter out eventual comments
+    local line = string.gsub(buf[lineidx], "%s*%-%-.*$", "")
+    -- Search for assignments, variable definitions in "for in" and in
+    -- function statements.
+    for i, pat in ipairs(patterns) do
+      local s, e, pre, post = string.find(" " .. line .. " ", "%s" .. pat .. "%s")
+      if pre then
+        -- if subnum is 1 then assignment is local
+        local line, subnum
+        if i == 1 then      -- only assignments can have local/not local variety
+          line, subnum = string.gsub(pre, "local%s+", "")
+        else
+          line = pre
+        end
+        -- just store variable names in a set
+        for varname in string.gmatch(line, "[^, \t]+") do assignments[varname] = true end
+      end
+    end
 
   end
   -- convert set to a list
@@ -401,18 +408,18 @@ end
 -- @param t should be a table or a nil
 function dir(t)
   if t == nil then
-	t = _G
+    t = _G
   assert(type(t) == "table", "t should be a table!")
   elseif type(t) == "table" then
-	for k, v in pairs(t) do
-	  -- TODO commit to main directory
-	  -- if value is a string and it's too long then trim it
-	  if type(v) == "string" and string.len(v) > 150 then
-		v = string.sub(v, 1, 150) .. "..."
-	  end
-	  -- TODO end
-	  print(k .. ":", v)
-	end
+    for k, v in pairs(t) do
+      -- TODO commit to main directory
+      -- if value is a string and it's too long then trim it
+      if type(v) == "string" and string.len(v) > 150 then
+        v = string.sub(v, 1, 150) .. "..."
+      end
+      -- TODO end
+      print(k .. ":", v)
+    end
   end
 end
 
@@ -420,10 +427,10 @@ end
 --- Prints keys of internal Vim's vim Lua module.
 function dir_vim()
   for k, v in pairs(vim) do
-	local ty = type(v)
-	if ty == "function" or ty == "string" or ty == "number" then
-	  print(k)
-	end
+    local ty = type(v)
+    if ty == "function" or ty == "string" or ty == "number" then
+      print(k)
+    end
   end
 end
 
@@ -440,7 +447,7 @@ function slice(t, s, e)
   e = e or #t
   local sliced = {}
   for idx = s, e do
-	if t[idx] then table.insert(sliced, t[idx]) end
+    if t[idx] then table.insert(sliced, t[idx]) end
   end
   return sliced
 end
@@ -451,12 +458,12 @@ end
 function merge_list(...)
   local res = {}
   for idx = 1, select("#", ...) do
-	local t = select(idx, ...)
-	if type(t) == "table" then
-	  for i, v in ipairs(t) do table.insert(res, v) end
-	else
-	  table.insert(res, t)
-	end
+    local t = select(idx, ...)
+    if type(t) == "table" then
+      for i, v in ipairs(t) do table.insert(res, v) end
+    else
+      table.insert(res, t)
+    end
   end
   return res
 end
@@ -468,12 +475,12 @@ function window_list()
   local idx = 1
   local winlist = {}
   while true do
-	local w = vim.window(idx)
-	if not w then break end
-	winlist[#winlist + 1] = {line = w.line, col = w.col, width = w.width,
-								height = w.height, firstline = w.buffer[1],
-								currentline = w.buffer[w.line]}
-	idx = idx + 1
+    local w = vim.window(idx)
+    if not w then break end
+    winlist[#winlist + 1] = {line = w.line, col = w.col, width = w.width,
+                                height = w.height, firstline = w.buffer[1],
+                                currentline = w.buffer[w.line]}
+    idx = idx + 1
   end
   return winlist
 end
@@ -483,9 +490,9 @@ end
 function print_window_list()
   local wincount
   for i, w in ipairs(window_list()) do
-	if i == 1 then print("win number, line, col, width, height :current line content...") end
-	print(string.format("%02d: %s", i, w.currentline))
-	wincount = i
+    if i == 1 then print("win number, line, col, width, height :current line content...") end
+    print(string.format("%02d: %s", i, w.currentline))
+    wincount = i
   end
   if not wincount then print("no windows found (how it's possible?!)...") end
 end
@@ -503,34 +510,34 @@ function func_doc(line, buf)
   assert(line >= 1 and line <= #buf, "line should be withing range of buffer's lines!")
   local curlines, doc = {}, {}
   for l = line - 1, 1, -1 do
-	local spciter = string.gmatch(buf[l], "%S+")
-	local pre = spciter()
-	local flag, fvalue, rest
-	if pre == "---" then
-	  rest = table.concat(iter_to_table(spciter), " ")
-	  table.insert(curlines, rest)
-	  doc["---"] = curlines
-	elseif pre == "--" then
-	  flag = spciter()
-	  if string.sub(flag, 1, 1) == "@" then
-		fvalue = spciter()
-		rest = table.concat(iter_to_table(spciter), " ")
-		table.insert(curlines, rest)
-		doc[flag .. ":" .. fvalue] = curlines
-		curlines = {}
-	  else
-		rest = table.concat(iter_to_table(spciter), " ")
-		table.insert(curlines, rest)
-	  end
-	else
-	  break
-	end
+    local spciter = string.gmatch(buf[l], "%S+")
+    local pre = spciter()
+    local flag, fvalue, rest
+    if pre == "---" then
+      rest = table.concat(iter_to_table(spciter), " ")
+      table.insert(curlines, rest)
+      doc["---"] = curlines
+    elseif pre == "--" then
+      flag = spciter()
+      if string.sub(flag, 1, 1) == "@" then
+        fvalue = spciter()
+        rest = table.concat(iter_to_table(spciter), " ")
+        table.insert(curlines, rest)
+        doc[flag .. ":" .. fvalue] = curlines
+        curlines = {}
+      else
+        rest = table.concat(iter_to_table(spciter), " ")
+        table.insert(curlines, rest)
+      end
+    else
+      break
+    end
   end
   -- post reverse and concat doc's strings
   for k, t in pairs(doc) do
-	local reversed = {}
-	for i = 1, #t do reversed[i] = t[#t - i + 1] end	-- reverse accumulated lines
-	doc[k] = table.concat(reversed, "\n")
+    local reversed = {}
+    for i = 1, #t do reversed[i] = t[#t - i + 1] end    -- reverse accumulated lines
+    doc[k] = table.concat(reversed, "\n")
   end
   return doc
 end
@@ -544,8 +551,8 @@ function iter_to_table(iter)
   local t = {}
   local idx = 0
   for v in iter do
-	idx = idx + 1
-	t[idx] = v
+    idx = idx + 1
+    t[idx] = v
   end
   return t
 end
