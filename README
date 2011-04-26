@@ -1,8 +1,11 @@
 This is a mirror of http://www.vim.org/scripts/script.php?script_id=3331
 
-This is (still kind of preliminary version) of my omni completion plugin for
-Lua. It works by scanning _G and parsing Vim buffers. Nested tables are
-supported so you can type:
+This is my omni completion plugin for Lua. It works by scanning _G and parsing
+Vim buffers. It's also possible to specify external text files with Lua names
+paths (delimited with new line). It's a very useful feature when a module can
+not be loaded or doesn't have iterable table exposed.
+
+Nested tables are supported so you can type:
 :lua foobar = {numbers = {one = 1, two = 2, three = 3}}
 
 Then typing CTRL-X CTRL-O list of possible matches will open:
@@ -35,4 +38,49 @@ Local variables completion works as before.
 Some other functions are supported like listing defined Lua functions in
 current buffer.
 There are common Lua abbreviation defined in lua_omni.vim too.
+
+                                                                       
+Mappings:
+
+CTRL-X CTRL-O
+    Calling the omni completion function.
+
+<Leader>fl  or  <Plug>PrintFunctionList
+    Prints list of defined Lua functions in current buffer. They are listed in
+    ascending line numbers order. Luadoc titles (if defined) are showed too.
+                                                                       
+<Leader>lf  or  <Plug>WriteAndLuaFile
+    Just a shortcut to call:
+        :w:luafile %
+
+<Leader>sli or  <Plug>SetLuaIabbrevs
+    Sets few common and useful insert mode abbreviations.
+
+<Leader>cli or  <Plug>ClearLuaIabbrevs
+    Clear any insert mode abbreviations set by previous shortcut.
+
+                                                                       
+From 0.16 version there is support for external files with completion paths.
+They can be specified via shell LUA_OMNI variable. Each file path should be
+delimited by comma or semicolon. Additionally the same can done using Vim
+b:lua_omni and g:lua_omni variables. The b: if exists will override g: however
+shell LUA_OMNI will be read and used in all cases.
+
+Format of completions files is very simple. Each line contains single Lua
+path like:
+
+foomodule.barPart
+foomodule.barPart.spam
+foomodule.barPart.spam.not
+foomodule.barPart.spam.twice
+foomodule.barPart.spam.multiply
+foomodule.__inner
+foomodule.__inner.foo
+math2mod
+math2mod.exp
+math2mod.div
+...
+(and so on)
+
+Order of lines is meaningless as results are sorted anyway.
 

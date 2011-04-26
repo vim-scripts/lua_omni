@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------------
 -- (c) 2011 Radosław Kowalski <rk@bixbite.pl>                               --
--- lua_omni.lua - Lua functions for Vim's omni completions v0.151           --
+-- lua_omni.lua - Lua functions for Vim's omni completions v0.16            --
 -- License: This file is placed in the public domain.                       --
 ------------------------------------------------------------------------------
 
@@ -126,6 +126,23 @@ function find_completions2(pat)
 end
 
 
+-- Returns a list with paths to files with additional path for Lua
+-- omnicompletion.
+function lua_omni_files()
+  local list = {}
+  -- first check LUA_OMNI shell variable
+  string.gsub(vim.eval("$LUA_OMNI") or "", '([^ ;,]+)', function(s) table.insert(list, s) end)
+  -- Next try b:lua_omni buffer variable or...
+  if vim.eval('exists("b:lua_omni")') == 1 then
+    string.gsub(vim.eval("b:lua_omni") or "", '([^ ;,]+)', function(s) table.insert(list, s) end)
+  -- there isn't buffer's var check for global one.
+  elseif vim.eval('exists("g:lua_omni")') == 1 then
+    string.gsub(vim.eval("g:lua_omni") or "", '([^ ;,]+)', function(s) table.insert(list, s) end)
+  end
+  return list
+end
+
+
 --- Search for paths in _G environment table and returns ones matching given pattern.
 -- @param pat a pattern
 -- @return list of matching paths from _G
@@ -162,9 +179,21 @@ function find_completions3(pat)
   -- start from _G
   flatten_recursively(_G)
 
---  for i, v in ipairs(flat) do
---  pfile(i .. ": " .. v)
---  end
+  -- add paths from file(s)
+  local pathfiles = lua_omni_files()
+  for _, fname in ipairs(pathfiles) do
+    -- there is chance that filename is invalid so guard for error
+    local res, err = pcall(function()
+      for line in io.lines(fname) do
+        -- trim line
+        line = string.gsub(line, "^%s-(%S.-)%s-$", "%1")
+        -- put every line as path
+        table.insert(flat, line)
+      end
+    end)
+    -- If pcall above did catch error then echo about it.
+    if not res then vim.command('echoerr "' .. tostring(err) .. '"') end
+  end
 
   local res = {}
   -- match paths with pattern

@@ -1,12 +1,13 @@
-README for lua_omni.vim (Version 0.151) / Apr 20 2011
+README for lua_omni.vim (Version 0.16) / Apr 26 2011
 
-	* INSTALATION
-	* RELEASE NOTES 
-	* FILES
+    * INSTALATION
+    * RELEASE NOTES 
+    * FILES
 
 lua_omni.vim implements omni completion function for Lua. It works by scanning
-the _G table for names and parsing Vim buffers. There are some abbreviations
-and Lua function list option added too.
+the _G table for names and parsing Vim buffers. File(s) with predefined Lua
+completions can be used too. There are some abbreviations and Lua function
+list option added as well.
 
 =======================================================================================
   INSTALLATION
@@ -14,10 +15,10 @@ and Lua function list option added too.
 
 Just extract and copy files from lua_omni.zip into local .vim/ftplugin and
 .vim/doc directories. Then execute in Vim:
-	:helptags ~/.vim/doc
+    :helptags ~/.vim/doc
 
 To get a help type:
-	:help lua_omni
+    :help lua_omni
 
 Beware! Vim 7.3 is needed with enabled Lua support.
 
@@ -27,18 +28,20 @@ Beware! Vim 7.3 is needed with enabled Lua support.
 =======================================================================================
 
 ---------------------------------------------------------------------------------------
-  RELEASE NOTES FOR VERSION 0.151
+  RELEASE NOTES FOR VERSION 0.16
 ---------------------------------------------------------------------------------------
-    + fixed small (thought irritating) bug in completion_findstart function
+    + user can specify files with Lua completions using shell LUA_OMNI and Vim
+      b:lua_omni, g:lua_omni variables
+      (useful when _G context can not have everything loaded)
 
 
 =======================================================================================
   FILES
 =======================================================================================
 
-README.lua_omni					This file.
-ftplugin/lua_omni.vim			A filetype plugin. Define functions, shortcuts
-								and abbreviations.
-ftplugin/lua_omni.lua			A file with Lua functions. Used by
-								lua_omni.vim.
-doc/lua_omni.txt				Vim help file with lua_omni documentation.
+README.lua_omni                 This file.
+ftplugin/lua_omni.vim           A filetype plugin. Define functions, shortcuts
+                                and abbreviations.
+ftplugin/lua_omni.lua           A file with Lua functions. Used by
+                                lua_omni.vim.
+doc/lua_omni.txt                Vim help file with lua_omni documentation.

@@ -1,8 +1,8 @@
 " Vim filetype plugin file
 "    Language:  lua
-"      Plugin:  Lua Omni Complete (version 0.151)
+"      Plugin:  Lua Omni Complete (version 0.16)
 "  Maintainer:	Radek Kowalski <rk@bixbite.pl>
-"  Last Change:	2011.04.05
+"  Last Change:	2011.04.26
 "  License:	This file is placed in the public domain.
 
 " check if Vim is in correct version and has Lua support
