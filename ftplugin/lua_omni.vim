@@ -1,6 +1,6 @@
 " Vim filetype plugin file
 "    Language:  lua
-"      Plugin:  Lua Omni Complete (version 0.16)
+"      Plugin:  Lua Omni Complete (version 0.162)
 "  Maintainer:	Radek Kowalski <rk@bixbite.pl>
 "  Last Change:	2011.04.26
 "  License:	This file is placed in the public domain.

@@ -1,8 +1,11 @@
 ------------------------------------------------------------------------------
 -- (c) 2011 Radosław Kowalski <rk@bixbite.pl>                               --
--- lua_omni.lua - Lua functions for Vim's omni completions v0.16            --
+-- lua_omni.lua - Lua functions for Vim's omni completions v0.162           --
 -- License: This file is placed in the public domain.                       --
 ------------------------------------------------------------------------------
+
+
+local PATTERN_LUA_IDENTIFIER = '([%a_]+[%a%d_.]*)'
 
 
 local __p_counter = 0
@@ -20,6 +23,35 @@ local function __p(...)
     end
     f:close()
   end
+end
+
+
+--- Finds all assignments in given buffer and return a table with them with order the closest ones being first.
+-- @param buf Vim's buffer to be used as source (current one if absent)
+-- @param line line number to be checked for being within function' body
+-- @return table with list of assignments
+function find_assigments(buf, line)
+  if not line then
+    buf = vim.window().buffer
+    line = vim.window().line
+  end
+  buf = buf or vim.buffer()
+  -- scan from first line
+  local set = {}
+  local list = {}
+  for lineidx = 1, #buf do
+    local left= string.match(buf[lineidx], PATTERN_LUA_IDENTIFIER .. '%s*=[^=]?.*$')
+    -- collect assignments with relative line numbers
+    local absidx = math.abs(line - lineidx)
+    if left and (not set[left] or (set[left] > absidx)) then
+      -- set new key or replace but only if the new absolute index is smaller
+      set[left] = absidx
+      table.insert(list, left)
+    end
+  end
+  -- sort list using set's absolute indexes in comparator
+  table.sort(list, function(v1, v2) return set[v1] < set[v2] end)
+  return list
 end
 
 
@@ -126,8 +158,7 @@ function find_completions2(pat)
 end
 
 
--- Returns a list with paths to files with additional path for Lua
--- omnicompletion.
+--- Returns a list with paths to files with additional path for Lua omnicompletion.
 function lua_omni_files()
   local list = {}
   -- first check LUA_OMNI shell variable
@@ -267,18 +298,13 @@ function complete_base_string(base)
       table.sort(t)
     end
 
-    -- completion using local variable assignments
-    local s, e = in_func_body(vim.window().buffer, vim.window().line)
-    if s then   -- check if cursor is within function definition
-      -- get and filter possible variable assignments
-      local assigments = {}
-      for i, v in ipairs(search_assignments1(vim.window().buffer, s, e)) do
-        if string.find(v, "^" .. base) then table.insert(assigments, v) end
-      end
-      table.sort(assigments)
-      -- merge assigment list at the beginning of final table
-      t = merge_list(assigments, t)
+    -- Always do variable assignments matching per buffer now as
+    -- find_assigments will return most close assignments first.
+    local assigments = {}
+    for i, v in ipairs(find_assigments()) do
+      if string.find(v, "^" .. base) then table.insert(assigments, v) end
     end
+    t = merge_list(assigments, t)
   end
   return t
 end
@@ -315,6 +341,16 @@ function function_list(buf)
     if string.find(line, "^%s-function%s+") then
       funcs[#funcs + 1] = {linenum, line}
     end
+    -- TODO reuse later
+--  local funcname = string.match(buf[lineidx], "function%s+" .. PATTERN_LUA_IDENTIFIER .. "%s*%(")
+--  if funcname then
+--    table.insert(funcs, funcname)
+--  else
+--    funcname = string.match(buf[lineidx], PATTERN_LUA_IDENTIFIER .. "%s*=%s*function%s*%(")
+--    if funcname then
+--      table.insert(funcs, funcname)
+--    end
+--  end
   end
   return funcs
 end
@@ -324,21 +360,22 @@ end
 -- The output format is line_number: function func_name __spaces__ function's title (if exists)
 -- @param buf buffer to be used as source
 function print_function_list(buf)
-  local funcnumber
   local funclist = function_list(buf)
-  local countsize = #tostring(funclist[#funclist][1])
-  for i, f in ipairs(funclist) do
-    if i == 1 then print("line: function definition...") end
-    -- try to get any doc about function...
-    local doc = func_doc(f[1])
-    local title = string.gmatch(doc["---"] or "", "[^\n]+")
-    title = title and title() or nil
-    local s = string.format("%" .. countsize .. "d: %-" .. (40 - countsize) ..  "s %s", f[1], f[2],
-            (title or ""))
-    print(s)
-    funcnumber = i
+  if #funclist > 0 then
+    local countsize = #tostring(funclist[#funclist][1])
+    for i, f in ipairs(funclist) do
+      if i == 1 then print("line: function definition...") end
+      -- try to get any doc about function...
+      local doc = func_doc(f[1])
+      local title = string.gmatch(doc["---"] or "", "[^\n]+")
+      title = title and title() or nil
+      local s = string.format("%" .. countsize .. "d: %-" .. (40 - countsize) ..  "s %s", f[1], f[2],
+              (title or ""))
+      print(s)
+    end
+  else
+    print "no functions found..."
   end
-  if not funcnumber then print "no functions found..." end
 end
 
 

@@ -1,4 +1,4 @@
-README for lua_omni.vim (Version 0.16) / Apr 26 2011
+README for lua_omni.vim (Version 0.162) / Apr 26 2011
 
     * INSTALATION
     * RELEASE NOTES 
@@ -28,11 +28,11 @@ Beware! Vim 7.3 is needed with enabled Lua support.
 =======================================================================================
 
 ---------------------------------------------------------------------------------------
-  RELEASE NOTES FOR VERSION 0.16
+  RELEASE NOTES FOR VERSION 0.162
 ---------------------------------------------------------------------------------------
-    + user can specify files with Lua completions using shell LUA_OMNI and Vim
-      b:lua_omni, g:lua_omni variables
-      (useful when _G context can not have everything loaded)
+    + fixed bug in print_function_list when a buffer doesn't have any
+      functions
+    + added better variable assignments completion
 
 
 =======================================================================================
