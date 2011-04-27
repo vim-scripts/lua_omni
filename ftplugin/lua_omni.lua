@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------------
 -- (c) 2011 Radosław Kowalski <rk@bixbite.pl>                               --
--- lua_omni.lua - Lua functions for Vim's omni completions v0.162           --
+-- lua_omni.lua - Lua functions for Vim's omni completions v0.163           --
 -- License: This file is placed in the public domain.                       --
 ------------------------------------------------------------------------------
 
@@ -40,13 +40,24 @@ function find_assigments(buf, line)
   local set = {}
   local list = {}
   for lineidx = 1, #buf do
-    local left= string.match(buf[lineidx], PATTERN_LUA_IDENTIFIER .. '%s*=[^=]?.*$')
+    local sts = string.match(buf[lineidx], PATTERN_LUA_IDENTIFIER .. '%s*=[^=]?.*$')
     -- collect assignments with relative line numbers
     local absidx = math.abs(line - lineidx)
-    if left and (not set[left] or (set[left] > absidx)) then
+    if sts and (not set[sts] or (set[sts] > absidx)) then
       -- set new key or replace but only if the new absolute index is smaller
-      set[left] = absidx
-      table.insert(list, left)
+      set[sts] = absidx
+      table.insert(list, sts)
+    end
+    -- check for variables defined in functions statements
+    sts = string.match(buf[lineidx], 'function%s*[^(]*%(([^)]+)%)')
+    if sts then
+      -- similarly as above but per ever function's parameter
+      string.gsub(sts, '([^, ]+)', function(s)
+        if not set[s] or (set[s] > absidx) then
+          set[s] = absidx
+          table.insert(list, s)
+        end
+      end)
     end
   end
   -- sort list using set's absolute indexes in comparator
