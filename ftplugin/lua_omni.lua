@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 -- (c) 2011 Radosław Kowalski <rk@bixbite.pl>                               --
--- lua_omni.lua - Lua functions for Vim's omni completions v0.163           --
--- License: This file is placed in the public domain.                       --
+-- lua_omni.lua - Lua functions for Vim's omni completions v0.165           --
+-- Licensed under the same terms as Lua (MIT license).                      --
 ------------------------------------------------------------------------------
 
 
@@ -39,10 +39,36 @@ function find_assigments(buf, line)
   -- scan from first line
   local set = {}
   local list = {}
+  local absidx
+
+  local function add_multi_names(str)
+    string.gsub(str, '([^, ]+)', function(s)
+      if not set[s] or (set[s] > absidx) then
+        set[s] = absidx
+        table.insert(list, s)
+      end
+    end)
+  end
+
   for lineidx = 1, #buf do
     local sts = string.match(buf[lineidx], PATTERN_LUA_IDENTIFIER .. '%s*=[^=]?.*$')
     -- collect assignments with relative line numbers
-    local absidx = math.abs(line - lineidx)
+    absidx = math.abs(line - lineidx)
+    if sts and (not set[sts] or (set[sts] > absidx)) then
+      -- set new key or replace but only if the new absolute index is smaller
+      set[sts] = absidx
+      table.insert(list, sts)
+    end
+    -- Check for variables defined without assignments as local. It may
+    -- generate redundant match but conditions in gsub's argument functions
+    -- will make it get correct results.
+    sts = string.match(buf[lineidx], 'local%s+([^=]+)')
+    if sts then add_multi_names(sts) end
+    -- matching variables initialized in generic for loop
+    sts = string.match(buf[lineidx], 'for%s+(.*)%s+in')
+    if sts then add_multi_names(sts) end
+    -- function names matching
+    sts = string.match(buf[lineidx], 'function%s+(' .. PATTERN_LUA_IDENTIFIER .. ')%s*%(')
     if sts and (not set[sts] or (set[sts] > absidx)) then
       -- set new key or replace but only if the new absolute index is smaller
       set[sts] = absidx
@@ -50,15 +76,7 @@ function find_assigments(buf, line)
     end
     -- check for variables defined in functions statements
     sts = string.match(buf[lineidx], 'function%s*[^(]*%(([^)]+)%)')
-    if sts then
-      -- similarly as above but per ever function's parameter
-      string.gsub(sts, '([^, ]+)', function(s)
-        if not set[s] or (set[s] > absidx) then
-          set[s] = absidx
-          table.insert(list, s)
-        end
-      end)
-    end
+    if sts then add_multi_names(sts) end
   end
   -- sort list using set's absolute indexes in comparator
   table.sort(list, function(v1, v2) return set[v1] < set[v2] end)

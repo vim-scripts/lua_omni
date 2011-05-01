@@ -1,3 +1,2 @@
 Things to do for 0.1x versions:
-  * outline window
-  * tables constructor scanning for prototypes hints
+  * outline window (it may be a folding method instead - think about it...)

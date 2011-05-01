@@ -1,9 +1,9 @@
 " Vim filetype plugin file
 "    Language:  lua
-"      Plugin:  Lua Omni Complete (version 0.163)
-"  Maintainer:	Radek Kowalski <rk@bixbite.pl>
-"  Last Change:	2011.04.27
-"  License:	This file is placed in the public domain.
+"      Plugin:  Lua Omni Complete (version 0.165)
+"  Maintainer:  Radek Kowalski <rk@bixbite.pl>
+"  Last Change: 2011.04.27
+"  License: Licensed under the same terms as Lua (MIT license).
 
 " check if Vim is in correct version and has Lua support
 if v:version < 703
@@ -46,10 +46,10 @@ if !hasmapto('<Plug>ClearLuaIabbrevs')
   map <unique> <Leader>cli  <Plug>ClearLuaIabbrevs
 endif
 
-noremap <unique> <script> <Plug>PrintFunctionList	:lua print_function_list()
-noremap <unique> <script> <Plug>WriteAndLuaFile		:w:luafile %
-noremap <unique> <script> <Plug>SetLuaIabbrevs		:call SetLuaIabbrevs()
-noremap <unique> <script> <Plug>ClearLuaIabbrevs	:call ClearLuaIabbrevs()
+noremap <unique> <script> <Plug>PrintFunctionList   :lua print_function_list()
+noremap <unique> <script> <Plug>WriteAndLuaFile     :w:luafile %
+noremap <unique> <script> <Plug>SetLuaIabbrevs      :call SetLuaIabbrevs()
+noremap <unique> <script> <Plug>ClearLuaIabbrevs    :call ClearLuaIabbrevs()
 
 
 " Common Lua abbreviations
@@ -82,13 +82,13 @@ let s:iabbrevlist = [
 
 function! SetLuaIabbrevs()
   for a in s:iabbrevlist
-	execute "iabbrev " . a[0] . " " . a[1]
+    execute "iabbrev " . a[0] . " " . a[1]
   endfor
 endfunction
 
 function! ClearLuaIabbrevs()
   for a in s:iabbrevlist
-	execute "iunabbrev " . a[0]
+    execute "iunabbrev " . a[0]
   endfor
 endfunction
 

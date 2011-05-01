@@ -86,3 +86,4 @@ math2mod.div
 (and so on)
 
 Order of lines is meaningless as results are sorted anyway.
+You may try lapg.lua script to generate such completion list automatically.
