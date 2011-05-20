@@ -87,3 +87,15 @@ math2mod.div
 
 Order of lines is meaningless as results are sorted anyway.
 You may try lapg.lua script to generate such completion list automatically.
+
+
+From 0.17 version there is folding using foldexpr function. To enable it just
+set foldenable option. It has configurable variables: g:lua_inner_folds and
+b:lua_inner_folds. When set to 1 folding is nested. When not existent, or set
+to other value than 1, folds will have one level only.  Of course the b:
+version will override the g:.
+
+To regenerate folds use the zx or zX normal commands.
+
+Though folding function try not to fold malformed blocks it depends on correct
+order of opening/closing statements.

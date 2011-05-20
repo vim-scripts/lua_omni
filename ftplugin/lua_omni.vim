@@ -1,8 +1,8 @@
 " Vim filetype plugin file
 "    Language:  lua
-"      Plugin:  Lua Omni Complete (version 0.165)
+"      Plugin:  Lua Omni Complete (version 0.17)
 "  Maintainer:  Radek Kowalski <rk@bixbite.pl>
-"  Last Change: 2011.04.27
+"  Last Change: 2011.05.20
 "  License: Licensed under the same terms as Lua (MIT license).
 
 " check if Vim is in correct version and has Lua support
@@ -98,6 +98,19 @@ function! CompleteLua(findstart, base)
 endfunction
 "set completefunc=CompleteLua
 set omnifunc=CompleteLua
+
+
+" add support for folding of Lua functions
+"function! FoldLuaLevel(v:lnum)
+function! FoldLuaLevel(linenum)
+  lua foldlevel_luacode()
+endfunction
+
+" set the foldexpr Vim variable
+set foldexpr=FoldLuaLevel(v:lnum)
+set foldmethod=expr
+set nofoldenable
+
 
 
 " restore compatibility options

@@ -1,4 +1,4 @@
-README for lua_omni.vim (Version 0.165) / Maj 1 2011
+README for lua_omni.vim (Version 0.17) / May 20 2011
 
     * INSTALATION
     * RELEASE NOTES 
@@ -28,13 +28,9 @@ Beware! Vim 7.3 is needed with enabled Lua support.
 =======================================================================================
 
 ---------------------------------------------------------------------------------------
-  RELEASE NOTES FOR VERSION 0.165
+  RELEASE NOTES FOR VERSION 0.17
 ---------------------------------------------------------------------------------------
-    + variables defined in for loops should complete now
-    + changed find_assigments function
-    + added the lapg.lua script for auto generating Lua completion list names
-      from documentation (html or text files)
-    + changed licence to MIT
+    + added folding for Lua code by foldexpr function
 
 
 =======================================================================================

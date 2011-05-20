@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------------
 -- (c) 2011 Radosław Kowalski <rk@bixbite.pl>                               --
--- lua_omni.lua - Lua functions for Vim's omni completions v0.165           --
+-- lua_omni.lua - Lua functions for Vim's omni completions v0.17            --
 -- Licensed under the same terms as Lua (MIT license).                      --
 ------------------------------------------------------------------------------
 
@@ -231,7 +231,7 @@ function find_completions3(pat)
           flatten_recursively(v, #lvl > 0 and lvl .. "." .. k or k)
         end
         -- Uncheck to allow to visit the same table but from different path.
-        visited[v] = nil                            
+        visited[v] = nil
       end
     end
   end
@@ -303,7 +303,7 @@ function complete_base_string(base)
       sortbylen = true
     else                    -- full completion
       pat = glob_to_pattern(base)
-      if not string.match(pat, '%.%*$') then pat = pat .. '.*' end 
+      if not string.match(pat, '%.%*$') then pat = pat .. '.*' end
     end
     -- try to find something matching...
     t = find_completions3("^" .. pat .. "$")
@@ -350,7 +350,7 @@ function completefunc_luacode()
   else      -- the second run - do proper complete
     local comps = complete_base_string(base)
     for i = 1, #comps do comps[i] = "'" .. comps[i] .. "'" end
-    -- returning 
+    -- returning
     vim.command("return [" .. table.concat(comps, ", ") .. "]")
   end
 end
@@ -437,7 +437,7 @@ function in_func_body(buf, line)
   if funcstart then -- search for function's end only when start was found...
     for lineidx = line + 1, #buf do
       if string.find(buf[lineidx], "^end") then
-        funcend = lineidx 
+        funcend = lineidx
         break
       end
     end
@@ -650,4 +650,89 @@ function iter_to_table(iter)
     t[idx] = v
   end
   return t
+end
+
+
+--- Iterator which scans Vim buffer and returns on each call a supposed fold level, line number and line itself. Parsing is simplified but should be good enough for most of the time.
+-- @param buf a Vim buffer to scan, nil for current buffer
+-- @param fromline a line number from which scanning starts, nil for 1
+-- @param toline a line number at which scanning stops, nil for the last buffer's line
+-- @return fold level, line number, line's content
+function fold_iter(buf, fromline, toline)
+  assert(fromline == nil or type(fromline) == "number", "fromline must be a number if specified!")
+  buf = buf or vim.buffer()
+  toline = toline or #buf
+  assert(type(toline) == "number", "toline must be a number if specified!")
+
+  local lineidx = fromline and (fromline - 1) or 0
+  -- to remember consecutive folds
+  local foldlist = {}
+  -- closure blocks opening/closing statements
+  local patterns = {{"do", "end"},
+                    {"repeat", "until%s+.+"},
+                    {"if%s+.+%s+then", "end"},
+                    {"for%s+.+%s+do", "end"},
+                    {"function.+", "end"},
+                    {"return%s+function.+", "end"},
+                    {"local%s+function%s+.+", "end"},
+                   }
+
+  return function()
+    lineidx = lineidx + 1
+    if lineidx <= toline then
+      -- search for one of blocks statements
+      for i, t in ipairs(patterns) do
+        -- add whole line anchors
+        local tagopen = '^%s*' .. t[1] .. '%s*$'
+        local tagclose = '^%s*' .. t[2] .. '%s*$'
+        -- try to find opening statement
+        if string.find(buf[lineidx], tagopen) then
+          -- just remember it
+          table.insert(foldlist, t)
+        elseif string.find(buf[lineidx], tagclose) then     -- check for closing statement
+          -- Proceed only if there is unclosed block in foldlist and its
+          -- closing statement matches.
+          if #foldlist > 0 and string.find(buf[lineidx], foldlist[#foldlist][2]) then
+            table.remove(foldlist)
+            -- Add 1 to foldlist length (synonymous to fold level) to include
+            -- closing statement in the fold too.
+            return #foldlist + 1, lineidx, buf[lineidx]
+          else
+            -- An incorrect situation where opening/closing statements didn't
+            -- match (probably due to malformed formating or erroneous code).
+            -- Just "reset" foldlist.
+            foldlist = {}
+          end
+        end
+      end
+      -- #foldlist is fold level
+      return #foldlist, lineidx, buf[lineidx]
+    end
+  end
+end
+
+
+--- A Lua part to be called from Vim script FoldLuaLevel function used by foldexpr option. It returns fold level for given line number.
+function foldlevel_luacode()
+  local linenum = vim.eval("a:linenum")
+  assert(type(linenum) == "number", "linenum must be a number!")
+
+  -- by default don't make nested folds
+  local innerfolds = false
+  -- though a configuration variable can enable it
+  if vim.eval('exists("b:lua_inner_folds")') == 1 then
+    innerfolds = vim.eval('b:lua_inner_folds') == 1
+  elseif vim.eval('exists("g:lua_inner_folds")') == 1 then
+    innerfolds = vim.eval('g:lua_inner_folds') == 1
+  end
+  __p("innerfolds " .. tostring(innerfolds))
+  -- Iterate over line fold levels to find that one for which Vim is asking.
+  -- TODO It's repetitively inefficient - perhaps some kind of caching would
+  -- be beneficial?
+  for lvl, lineidx in fold_iter() do
+    if lineidx == linenum then
+      vim.command("return " .. (innerfolds and lvl or (lvl > 1 and 1 or lvl)))
+      break
+    end
+  end
 end
