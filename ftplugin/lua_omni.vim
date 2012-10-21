@@ -27,9 +27,15 @@ set cpo&vim
 
 " source Lua...
 " luafile ~/.vim/ftplugin/lua_omni.lua
+luafile ~/.vim/bundle/lua_omni/ftplugin/lua_omni.lua
 " improve pathogen compatible
-let l:lua_omni_file = findfile("lua_omni.lua", '.;&runtimepath')
-exec ":luafile " . l:lua_omni_file
+" FIXME let s:lua_omni_file = findfile(expand("%:p:r").'lua', '.;')
+" DEBUG echo s:lua_omni_file
+" if exists('s:lua_omni_file') && s:lua_omni_file =~# ""
+"   echohl WarningMsg | echomsg "can not find file lua_omni.lua" | echohl None
+" else
+"   execute ":luafile " . s:lua_omni_file
+" endif
 
 " options...
 set shiftwidth=2
