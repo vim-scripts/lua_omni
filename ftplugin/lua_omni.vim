@@ -24,9 +24,18 @@ let b:did_lua_completions = 1
 " save and reset compatibility options
 let s:save_cpo = &cpo
 set cpo&vim
-                     
+
 " source Lua...
-luafile ~/.vim/ftplugin/lua_omni.lua
+" luafile ~/.vim/ftplugin/lua_omni.lua
+luafile ~/.vim/bundle/lua_omni/ftplugin/lua_omni.lua
+" improve pathogen compatible
+" FIXME let s:lua_omni_file = findfile(expand("%:p:r").'lua', '.;')
+" DEBUG echo s:lua_omni_file
+" if exists('s:lua_omni_file') && s:lua_omni_file =~# ""
+"   echohl WarningMsg | echomsg "can not find file lua_omni.lua" | echohl None
+" else
+"   execute ":luafile " . s:lua_omni_file
+" endif
 
 " options...
 set shiftwidth=2
@@ -46,10 +55,10 @@ if !hasmapto('<Plug>ClearLuaIabbrevs')
   map <unique> <Leader>cli  <Plug>ClearLuaIabbrevs
 endif
 
-noremap <unique> <script> <Plug>PrintFunctionList   :lua print_function_list()
-noremap <unique> <script> <Plug>WriteAndLuaFile     :w:luafile %
-noremap <unique> <script> <Plug>SetLuaIabbrevs      :call SetLuaIabbrevs()
-noremap <unique> <script> <Plug>ClearLuaIabbrevs    :call ClearLuaIabbrevs()
+noremap <unique> <script> <Plug>PrintFunctionList   :lua print_function_list()<CR>
+noremap <unique> <script> <Plug>WriteAndLuaFile     :w<CR>:luafile %<CR>
+noremap <unique> <script> <Plug>SetLuaIabbrevs      :call SetLuaIabbrevs()<CR>
+noremap <unique> <script> <Plug>ClearLuaIabbrevs    :call ClearLuaIabbrevs()<CR>
 
 
 " Common Lua abbreviations
