@@ -24,7 +24,7 @@ let b:did_lua_completions = 1
 " save and reset compatibility options
 let s:save_cpo = &cpo
 set cpo&vim
-                     
+
 " source Lua...
 luafile ~/.vim/ftplugin/lua_omni.lua
 
@@ -46,10 +46,10 @@ if !hasmapto('<Plug>ClearLuaIabbrevs')
   map <unique> <Leader>cli  <Plug>ClearLuaIabbrevs
 endif
 
-noremap <unique> <script> <Plug>PrintFunctionList   :lua print_function_list()
-noremap <unique> <script> <Plug>WriteAndLuaFile     :w:luafile %
-noremap <unique> <script> <Plug>SetLuaIabbrevs      :call SetLuaIabbrevs()
-noremap <unique> <script> <Plug>ClearLuaIabbrevs    :call ClearLuaIabbrevs()
+noremap <unique> <script> <Plug>PrintFunctionList   :lua print_function_list()<CR>
+noremap <unique> <script> <Plug>WriteAndLuaFile     :w<CR>:luafile %<CR>
+noremap <unique> <script> <Plug>SetLuaIabbrevs      :call SetLuaIabbrevs()<CR>
+noremap <unique> <script> <Plug>ClearLuaIabbrevs    :call ClearLuaIabbrevs()<CR>
 
 
 " Common Lua abbreviations
