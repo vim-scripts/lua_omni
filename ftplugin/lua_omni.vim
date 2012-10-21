@@ -26,7 +26,10 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 " source Lua...
-luafile ~/.vim/ftplugin/lua_omni.lua
+" luafile ~/.vim/ftplugin/lua_omni.lua
+" improve pathogen compatible
+let l:lua_omni_file = findfile("lua_omni.lua", '.;&runtimepath')
+exec ":luafile " . l:lua_omni_file
 
 " options...
 set shiftwidth=2
