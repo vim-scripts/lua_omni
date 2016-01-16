@@ -2,7 +2,7 @@
 "    Language:  lua
 "      Plugin:  Lua Omni Complete (version 0.17)
 "  Maintainer:  Radek Kowalski <rk@bixbite.pl>
-"  Last Change: 2011.05.20
+"  Last Change: 2016.01.16
 "  License: Licensed under the same terms as Lua (MIT license).
 
 " check if Vim is in correct version and has Lua support
@@ -25,8 +25,9 @@ let b:did_lua_completions = 1
 let s:save_cpo = &cpo
 set cpo&vim
                      
-" source Lua...
-luafile ~/.vim/ftplugin/lua_omni.lua
+" source Lua from this script's location (usually ~/.vim/ftplugin)
+let s:path = resolve(expand('<sfile>:p:h'))
+exec "luafile" s:path.'/lua_omni.lua'
 
 " options...
 set shiftwidth=2
@@ -46,10 +47,27 @@ if !hasmapto('<Plug>ClearLuaIabbrevs')
   map <unique> <Leader>cli  <Plug>ClearLuaIabbrevs
 endif
 
-noremap <unique> <script> <Plug>PrintFunctionList   :lua print_function_list()
-noremap <unique> <script> <Plug>WriteAndLuaFile     :w:luafile %
-noremap <unique> <script> <Plug>SetLuaIabbrevs      :call SetLuaIabbrevs()
-noremap <unique> <script> <Plug>ClearLuaIabbrevs    :call ClearLuaIabbrevs()
+" define the <PLUG>s we mapped above
+try
+  noremap <unique> <script>
+        \<Plug>PrintFunctionList   :lua print_function_list()<CR>
+catch /^Vim\%((\a\+)\)\=:E227/  " already mapped, e.g. user created their own
+endtry          "+version or (much more likely) this script was sourced before
+try
+  noremap <unique> <script>
+        \<Plug>WriteAndLuaFile     :w<CR>:luafile %<CR>
+catch /^Vim\%((\a\+)\)\=:E227/  " already mapped, e.g. user created their own
+endtry          "+version or (much more likely) this script was sourced before
+try
+  noremap <unique> <script>
+        \<Plug>SetLuaIabbrevs      :call SetLuaIabbrevs()<CR>
+catch /^Vim\%((\a\+)\)\=:E227/  " already mapped, e.g. user created their own
+endtry          "+version or (much more likely) this script was sourced before
+try
+  noremap <unique> <script>
+        \<Plug>ClearLuaIabbrevs    :call ClearLuaIabbrevs()<CR>
+catch /^Vim\%((\a\+)\)\=:E227/  " already mapped, e.g. user created their own
+endtry          "+version or (much more likely) this script was sourced before
 
 
 " Common Lua abbreviations
