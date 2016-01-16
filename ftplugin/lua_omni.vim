@@ -47,10 +47,27 @@ if !hasmapto('<Plug>ClearLuaIabbrevs')
   map <unique> <Leader>cli  <Plug>ClearLuaIabbrevs
 endif
 
-noremap <unique> <script> <Plug>PrintFunctionList   :lua print_function_list()<CR>
-noremap <unique> <script> <Plug>WriteAndLuaFile     :w<CR>:luafile %<CR>
-noremap <unique> <script> <Plug>SetLuaIabbrevs      :call SetLuaIabbrevs()<CR>
-noremap <unique> <script> <Plug>ClearLuaIabbrevs    :call ClearLuaIabbrevs()<CR>
+" define the <PLUG>s we mapped above
+try
+  noremap <unique> <script>
+        \<Plug>PrintFunctionList   :lua print_function_list()<CR>
+catch /^Vim\%((\a\+)\)\=:E227/  " already mapped, e.g. user created their own
+endtry          "+version or (much more likely) this script was sourced before
+try
+  noremap <unique> <script>
+        \<Plug>WriteAndLuaFile     :w<CR>:luafile %<CR>
+catch /^Vim\%((\a\+)\)\=:E227/  " already mapped, e.g. user created their own
+endtry          "+version or (much more likely) this script was sourced before
+try
+  noremap <unique> <script>
+        \<Plug>SetLuaIabbrevs      :call SetLuaIabbrevs()<CR>
+catch /^Vim\%((\a\+)\)\=:E227/  " already mapped, e.g. user created their own
+endtry          "+version or (much more likely) this script was sourced before
+try
+  noremap <unique> <script>
+        \<Plug>ClearLuaIabbrevs    :call ClearLuaIabbrevs()<CR>
+catch /^Vim\%((\a\+)\)\=:E227/  " already mapped, e.g. user created their own
+endtry          "+version or (much more likely) this script was sourced before
 
 
 " Common Lua abbreviations
